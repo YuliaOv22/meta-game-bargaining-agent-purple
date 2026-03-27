@@ -12,7 +12,7 @@ WORKDIR /home/agent
 
 COPY pyproject.toml uv.lock README.md ./
 COPY src src
-COPY memory memory
+COPY --chown=agent:agent memory memory
 
 RUN \
     --mount=type=cache,target=/home/agent/.cache/uv,uid=1000 \
