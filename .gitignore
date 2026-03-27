@@ -12,3 +12,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# log
+logs/
+
+# custom
+simulate_green.py
+docs/

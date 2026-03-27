@@ -1,12 +1,14 @@
 [project]
-name = "agent-template"
+name = "meta-game-bargaining-agent-purple"
 version = "0.1.0"
-description = "A template for A2A agents"
+description = "Mistral LLM bargaining agent for the AgentBeats meta-game"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "a2a-sdk[http-server]>=0.3.20",
     "uvicorn>=0.38.0",
+    "mistralai>=1.0.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -14,4 +16,9 @@ test = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
     "httpx>=0.28.1",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
 ]

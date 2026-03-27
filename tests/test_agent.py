@@ -10,7 +10,7 @@ from a2a.types import Message, Part, Role, TextPart
 # A2A validation helpers - adapted from https://github.com/a2aproject/a2a-inspector/blob/main/backend/validators.py
 
 def validate_agent_card(card_data: dict[str, Any]) -> list[str]:
-    """Validate the structure and fields of an agent card."""
+    """Validate the structure and required fields of an A2A agent card."""
     errors: list[str] = []
 
     # Use a frozenset for efficient checking and to indicate immutability.
@@ -70,6 +70,7 @@ def validate_agent_card(card_data: dict[str, Any]) -> list[str]:
 
 
 def _validate_task(data: dict[str, Any]) -> list[str]:
+    """Validate that a task object has required id and status.state fields."""
     errors = []
     if 'id' not in data:
         errors.append("Task object missing required field: 'id'.")
@@ -79,6 +80,7 @@ def _validate_task(data: dict[str, Any]) -> list[str]:
 
 
 def _validate_status_update(data: dict[str, Any]) -> list[str]:
+    """Validate that a status update has the required status.state field."""
     errors = []
     if 'status' not in data or 'state' not in data.get('status', {}):
         errors.append(
@@ -88,6 +90,7 @@ def _validate_status_update(data: dict[str, Any]) -> list[str]:
 
 
 def _validate_artifact_update(data: dict[str, Any]) -> list[str]:
+    """Validate that an artifact update has a non-empty parts array."""
     errors = []
     if 'artifact' not in data:
         errors.append(
@@ -103,6 +106,7 @@ def _validate_artifact_update(data: dict[str, Any]) -> list[str]:
 
 
 def _validate_message(data: dict[str, Any]) -> list[str]:
+    """Validate that an agent message has non-empty parts and role set to agent."""
     errors = []
     if (
         'parts' not in data
@@ -138,6 +142,7 @@ def validate_event(data: dict[str, Any]) -> list[str]:
 # A2A messaging helpers
 
 async def send_text_message(text: str, url: str, context_id: str | None = None, streaming: bool = False):
+    """Send a text message to an A2A agent and collect all response events."""
     async with httpx.AsyncClient(timeout=10) as httpx_client:
         resolver = A2ACardResolver(httpx_client=httpx_client, base_url=url)
         agent_card = await resolver.get_agent_card()

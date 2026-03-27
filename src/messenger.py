@@ -12,10 +12,10 @@ from a2a.types import (
     Message,
     Part,
     Role,
+    Task,
     TextPart,
     DataPart,
 )
-
 
 DEFAULT_TIMEOUT = 300
 
@@ -23,6 +23,7 @@ DEFAULT_TIMEOUT = 300
 def create_message(
     *, role: Role = Role.user, text: str, context_id: str | None = None
 ) -> Message:
+    """Create an A2A Message with a single text part."""
     return Message(
         kind="message",
         role=role,
@@ -33,6 +34,7 @@ def create_message(
 
 
 def merge_parts(parts: list[Part]) -> str:
+    """Concatenate text and data parts from an A2A message into a single string."""
     chunks = []
     for part in parts:
         if isinstance(part.root, TextPart):
@@ -65,35 +67,37 @@ async def send_message(
 
         outbound_msg = create_message(text=message, context_id=context_id)
         last_event = None
-        outputs = {"response": "", "context_id": None}
+        outputs: dict[str, str | None] = {"response": "", "context_id": None}
+        response = ""
 
         # if streaming == False, only one event is generated
         async for event in client.send_message(outbound_msg):
             last_event = event
 
-        match last_event:
-            case Message() as msg:
-                outputs["context_id"] = msg.context_id
-                outputs["response"] += merge_parts(msg.parts)
-
-            case (task, update):
+        if isinstance(last_event, Message):
+            outputs["context_id"] = last_event.context_id
+            response += merge_parts(last_event.parts)
+        elif isinstance(last_event, tuple):
+            task = last_event[0]
+            if isinstance(task, Task):
                 outputs["context_id"] = task.context_id
                 outputs["status"] = task.status.state.value
-                msg = task.status.message
-                if msg:
-                    outputs["response"] += merge_parts(msg.parts)
+                status_msg = task.status.message
+                if status_msg:
+                    response += merge_parts(status_msg.parts)
                 if task.artifacts:
                     for artifact in task.artifacts:
-                        outputs["response"] += merge_parts(artifact.parts)
+                        response += merge_parts(artifact.parts)
 
-            case _:
-                pass
-
+        outputs["response"] = response
         return outputs
 
 
 class Messenger:
+    """Maintains conversation context across multiple A2A agent interactions."""
+
     def __init__(self):
+        """Initialize with an empty context registry."""
         self._context_ids = {}
 
     async def talk_to_agent(
@@ -127,4 +131,5 @@ class Messenger:
         return outputs["response"]
 
     def reset(self):
+        """Clear all stored conversation contexts."""
         self._context_ids = {}

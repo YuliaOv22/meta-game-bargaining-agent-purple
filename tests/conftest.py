@@ -3,6 +3,7 @@ import pytest
 
 
 def pytest_addoption(parser):
+    """Add --agent-url CLI option for specifying the running agent endpoint."""
     parser.addoption(
         "--agent-url",
         default="http://localhost:9009",

@@ -14,32 +14,39 @@ from executor import Executor
 
 
 def main():
+    """Start the A2A agent HTTP server with the configured agent card and executor."""
     parser = argparse.ArgumentParser(description="Run the A2A agent.")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind the server")
-    parser.add_argument("--port", type=int, default=9009, help="Port to bind the server")
-    parser.add_argument("--card-url", type=str, help="URL to advertise in the agent card")
+    parser.add_argument(
+        "--host", type=str, default="127.0.0.1", help="Host to bind the server"
+    )
+    parser.add_argument(
+        "--port", type=int, default=9009, help="Port to bind the server"
+    )
+    parser.add_argument(
+        "--card-url", type=str, help="URL to advertise in the agent card"
+    )
     args = parser.parse_args()
 
     # Fill in your agent card
     # See: https://a2a-protocol.org/latest/tutorials/python/3-agent-skills-and-card/
-    
+
     skill = AgentSkill(
-        id="",
-        name="",
-        description="",
-        tags=[],
-        examples=[]
+        id="bargaining_negotiator",
+        name="Bargaining Negotiator",
+        description="Negotiates item allocations in the AgentBeats bargaining meta-game using strategic reasoning",
+        tags=["bargaining", "negotiation", "meta-game"],
+        examples=[],
     )
 
     agent_card = AgentCard(
-        name="",
-        description="",
+        name="Mistral Bargaining Agent",
+        description="A purple agent that uses Mistral LLM for strategic negotiation in the AgentBeats bargaining meta-game",
         url=args.card_url or f"http://{args.host}:{args.port}/",
-        version='1.0.0',
-        default_input_modes=['text'],
-        default_output_modes=['text'],
+        version="1.0.0",
+        default_input_modes=["text"],
+        default_output_modes=["text"],
         capabilities=AgentCapabilities(streaming=True),
-        skills=[skill]
+        skills=[skill],
     )
 
     request_handler = DefaultRequestHandler(
@@ -53,5 +60,5 @@ def main():
     uvicorn.run(server.build(), host=args.host, port=args.port)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

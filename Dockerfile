@@ -1,11 +1,18 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm
+FROM python:3.11-slim
 
-RUN adduser agent
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install uv
+
+RUN adduser --disabled-password agent
 USER agent
 WORKDIR /home/agent
 
 COPY pyproject.toml uv.lock README.md ./
 COPY src src
+COPY memory memory
 
 RUN \
     --mount=type=cache,target=/home/agent/.cache/uv,uid=1000 \
