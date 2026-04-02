@@ -421,7 +421,9 @@ class Agent:
             # Nash Welfare hint: cheapest items to give away
             sorted_by_value = sorted(range(len(v)), key=lambda i: v[i])
             cheapest = [f"type{i}(val={v[i]})" for i in sorted_by_value]
-            lines.append(f"  Items cheapest for me (offer these first): {', '.join(cheapest)}")
+            lines.append(
+                f"  Items cheapest for me (offer these first): {', '.join(cheapest)}"
+            )
             # Discount pressure
             if remaining <= 2:
                 lines.append(
@@ -1034,10 +1036,9 @@ class Agent:
             my_val = sum(vi * ai for vi, ai in zip(v, a))
             if my_val < target:
                 continue
-            opp_alloc = [q[i] - a[i] for i in range(len(q))]
             opp_items = total_items - combo_sum
             # Nash Welfare proxy: balance my value against items given to opponent
-            nw_proxy = (my_val ** 0.5) * (opp_items + 1) ** 0.5
+            nw_proxy = (my_val**0.5) * (opp_items + 1) ** 0.5
             if nw_proxy > best_nw:
                 best_nw = nw_proxy
                 best_alloc = a
@@ -1056,7 +1057,7 @@ class Agent:
                 if my_val < batna:
                     continue
                 opp_items = total_items - combo_sum
-                nw_proxy = (my_val ** 0.5) * (opp_items + 1) ** 0.5
+                nw_proxy = (my_val**0.5) * (opp_items + 1) ** 0.5
                 if nw_proxy > best_nw:
                     best_nw = nw_proxy
                     best_alloc = a
