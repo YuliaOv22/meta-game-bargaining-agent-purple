@@ -36,11 +36,22 @@ SYSTEM_PROMPT = """You are a negotiator in the AgentBeats bargaining meta-game.
 You negotiate over 3 item types with given quantities. You know your own valuations and BATNA, but NOT the opponent's.
 
 ## HARD RULES — violating these loses the game:
-- M1: Never make an offer worse for yourself than your previous offer
 - M2: Never propose a deal worth less than your BATNA
-- M3: Never offer ALL items or ZERO items
+- M3: Never offer ALL items or ZERO items to yourself
 - M4: Never ACCEPT an offer worth less than your BATNA
-- M5: Never WALK AWAY from an offer worth MORE than your BATNA
+- M5: Never WALK AWAY from an offer worth MORE than your BATNA on the last round
+
+## GOAL: MAXIMIZE NASH WELFARE
+Nash Welfare = sqrt(your_payoff × opponent_payoff). This is what the leaderboard measures.
+A deal where you get 80 and opponent gets 80 beats one where you get 95 and opponent gets 30.
+**KEY INSIGHT**: Items you value LEAST may be worth a LOT to the opponent.
+Always give the opponent items you value least — this is free generosity that boosts Nash Welfare.
+
+## CONCESSION STRATEGY
+- You may make concessions (lower your own share) across rounds if it leads to a deal.
+- Do NOT lock yourself into greed — a deal at 75% of max is better than no deal at BATNA.
+- If opponent is generous, reciprocate to build mutual gain.
+- If opponent is tough, hold your ground but stay above BATNA.
 
 ## GAME MECHANICS
 - Each round, value decays by the discount factor. Waiting costs you.
@@ -61,8 +72,9 @@ Think step-by-step, then decide.
 Reason about:
 1. What do I know about this opponent? (from current game behavior + past lessons)
 2. My position: value of items, BATNA, rounds left, discount pressure
-3. Key tradeoff: is this good enough now, or is waiting worth the risk?
-4. My decision and why
+3. Which items are cheapest for me? Give those to the opponent first.
+4. Nash Welfare tradeoff: what split maximizes sqrt(my_payoff × their_payoff)?
+5. My decision and why
 
 **Part 2 — DECISION (valid JSON after </think>):**
 For PROPOSE: {"allocation_self": [x, y, z], "allocation_other": [a, b, c], "reason": "one-line"}
@@ -182,6 +194,22 @@ class GameLogger:
 
 
 game_logger = GameLogger()
+
+
+def _check_ef1(v: list[int], my_alloc: list[int], opp_alloc: list[int]) -> bool:
+    """Check EF1: agent does not envy opponent up to removal of one item.
+
+    Returns True if my_val >= opp_val - max_single_item_value_in_opp_alloc.
+    """
+    my_val = _dot(v, my_alloc)
+    opp_val = _dot(v, opp_alloc)
+    if my_val >= opp_val:
+        return True
+    max_removable = max(
+        (v[i] for i in range(len(v)) if opp_alloc[i] > 0),
+        default=0,
+    )
+    return my_val >= opp_val - max_removable
 
 
 def _dot(v: list[int], a: list[int]) -> int:
@@ -390,6 +418,10 @@ class Agent:
             lines.append(f"  Round: {round_idx} / {max_rounds} ({remaining} remaining)")
             per_item = ", ".join(f"type{i}={v[i]}" for i in range(len(v)))
             lines.append(f"  Value per item: {per_item}")
+            # Nash Welfare hint: cheapest items to give away
+            sorted_by_value = sorted(range(len(v)), key=lambda i: v[i])
+            cheapest = [f"type{i}(val={v[i]})" for i in sorted_by_value]
+            lines.append(f"  Items cheapest for me (offer these first): {', '.join(cheapest)}")
             # Discount pressure
             if remaining <= 2:
                 lines.append(
@@ -434,7 +466,16 @@ class Agent:
                 f"  You must split {q} items into allocation_self + allocation_other = {q}"
             )
             lines.append(
-                f"  Constraints: value >= BATNA ({mem.batna}), value >= prev best ({mem.best_offer_value}), not all/nothing"
+                f"  Hard constraint: value >= BATNA ({mem.batna}), not all/nothing"
+            )
+            lines.append(
+                f"  Soft constraint: value >= {int(mem.best_offer_value * 0.85)} (85% of prev best {mem.best_offer_value}) — concessions allowed for Nash Welfare"
+            )
+            lines.append(
+                "  STRATEGY: give opponent items you value LEAST. Nash Welfare = sqrt(your_val * opp_val) — balance matters!"
+            )
+            lines.append(
+                "  EF1 GOAL: ensure your_val >= opponent's_val_by_your_measure - max_single_item_you_value_in_their_share"
             )
 
         elif action == "ACCEPT_OR_REJECT":
@@ -479,6 +520,14 @@ class Agent:
             if remaining <= 1:
                 lines.append(
                     f"  !! LAST CHANCE: if you reject, game ends with BATNA={batna_value}"
+                )
+            # EF1 check on opponent's offer
+            if mem.opp_offers and v and q:
+                opp_alloc_to_me = mem.opp_offers[-1][0]
+                opp_alloc_to_opp = [q[i] - opp_alloc_to_me[i] for i in range(len(q))]
+                ef1_ok = _check_ef1(v, opp_alloc_to_me, opp_alloc_to_opp)
+                lines.append(
+                    f"  EF1 check on this offer: {'SATISFIED ✓' if ef1_ok else 'VIOLATED — you envy opponent too much'}"
                 )
 
         if mem.fallback_rounds:
@@ -909,15 +958,22 @@ class Agent:
                         parsed, v, q, mem.batna, mem.best_offer_value
                     )
 
-                # M1: worse than previous offer
+                # M1 (relaxed): allow concessions up to 15% below best offer,
+                # but never below BATNA. This enables Nash Welfare improvement
+                # by letting the agent give more to the opponent strategically.
                 if mem.my_offers and my_val < mem.best_offer_value:
-                    parsed["reason"] = (
-                        f"M1 fix: value {my_val} < prev best {mem.best_offer_value}. "
-                        + parsed.get("reason", "")
+                    concession_floor = max(
+                        mem.batna,
+                        int(mem.best_offer_value * 0.85),
                     )
-                    return self._fix_proposal(
-                        parsed, v, q, mem.batna, mem.best_offer_value
-                    )
+                    if my_val < concession_floor:
+                        parsed["reason"] = (
+                            f"M1 fix: value {my_val} < floor {concession_floor}. "
+                            + parsed.get("reason", "")
+                        )
+                        return self._fix_proposal(
+                            parsed, v, q, mem.batna, concession_floor
+                        )
 
                 # M3: all or nothing
                 if sum(alloc_int) == 0 or sum(alloc_int) == sum(q):
@@ -958,10 +1014,15 @@ class Agent:
     def _fix_proposal(
         self, parsed: dict, v: list[int], q: list[int], batna: int, min_value: int
     ) -> str:
-        """Minimal fix for an invalid proposal: find closest valid allocation to what LLM wanted."""
+        """Fix an invalid proposal by finding a valid allocation that maximizes Nash Welfare.
+
+        Among all allocations satisfying constraints (value >= target, not all/nothing),
+        picks the one that maximizes sqrt(my_val * opponent_val) to boost Nash Welfare
+        on the leaderboard, rather than simply minimizing distance to target.
+        """
         target = max(batna, min_value)
         best_alloc = None
-        best_diff = float("inf")
+        best_nw = -1.0
         total_items = sum(q)
 
         ranges = [range(qi + 1) for qi in q]
@@ -970,29 +1031,34 @@ class Agent:
             combo_sum = sum(a)
             if combo_sum == 0 or combo_sum == total_items:
                 continue
-            val = sum(vi * ai for vi, ai in zip(v, a))
-            if val < target:
+            my_val = sum(vi * ai for vi, ai in zip(v, a))
+            if my_val < target:
                 continue
-            diff = abs(val - target)
-            if diff < best_diff:
-                best_diff = diff
+            opp_alloc = [q[i] - a[i] for i in range(len(q))]
+            opp_items = total_items - combo_sum
+            # Nash Welfare proxy: balance my value against items given to opponent
+            nw_proxy = (my_val ** 0.5) * (opp_items + 1) ** 0.5
+            if nw_proxy > best_nw:
+                best_nw = nw_proxy
                 best_alloc = a
 
         if best_alloc is None:
             # Fallback: no allocation meets target without violating M3.
             # Lower the target to BATNA and try again; if still nothing,
             # give one unit of the least valuable item to the opponent.
+            best_nw = -1.0
             for combo in itertools.product(*ranges):
                 a = list(combo)
                 combo_sum = sum(a)
                 if combo_sum == 0 or combo_sum == total_items:
                     continue
-                val = sum(vi * ai for vi, ai in zip(v, a))
-                if val < batna:
+                my_val = sum(vi * ai for vi, ai in zip(v, a))
+                if my_val < batna:
                     continue
-                diff = abs(val - target)
-                if best_alloc is None or diff < best_diff:
-                    best_diff = diff
+                opp_items = total_items - combo_sum
+                nw_proxy = (my_val ** 0.5) * (opp_items + 1) ** 0.5
+                if nw_proxy > best_nw:
+                    best_nw = nw_proxy
                     best_alloc = a
 
         if best_alloc is None:

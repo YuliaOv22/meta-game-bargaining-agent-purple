@@ -1,11 +1,12 @@
 # Opponent: purple_vs_walk
-Games: 12 | Agreements: 12
+Games: 41 | Agreements: 41
 
 ## Summary
-Opponent "purple_vs_walk" has zero resistance to extreme anchors and prioritizes immediate deal closure over value optimization. Always open with a valid JSON demand for 100% of the surplus to capture full value without negotiation.
+Opponent "purple_vs_walk" instantly concedes to any extreme, valid single-value JSON anchor in the first round, prioritizing deal closure over value. Always open with a single-value array demand for 100% of the surplus to secure full value without negotiation or complexity.
 
 ## Lessons
-- [2026-03-27] Demand 100% of the surplus in the first offer *and ensure it’s valid JSON*—this opponent’s fallback to arithmetic defaults (not strategy) means they’ll accept any extreme anchor, but only if it’s technically executable.
-- [2026-03-27] Open with the absolute maximum demand (100% of total value) in the first round—this opponent’s immediate concession confirms they won’t negotiate, so skip incremental offers and claim full surplus upfront.
-- [2026-03-27] Open with the highest valid demand immediately—this opponent concedes to any technically executable extreme anchor, so skip negotiation entirely and claim full surplus in the first round without hesitation.
-- [2026-03-27] Open with the highest valid demand in the first round and ensure it’s formatted as a single-value array (e.g., `[104]`)—this opponent accepts any extreme anchor if it’s technically executable, and simplifying the offer reduces parsing errors.
+- [2026-04-02] Open with the absolute maximum demand (100% of total value) in the first round—this opponent’s immediate concession confirms they won’t negotiate, so skip incremental offers and claim full surplus upfront.
+- [2026-04-02] Use a single-value array demand (e.g., `[total_possible_value]`)—this avoids parsing errors, guarantees full surplus capture, and eliminates unnecessary negotiation rounds.
+- [2026-04-02] Demand the full surplus in a single-value array (e.g., `[672]`) immediately—this opponent concedes instantly to maximal asks, so eliminate unnecessary complexity to secure the deal faster.
+- [2026-04-02] Demand the full surplus in a single-value array (e.g., `[715]`) immediately—this opponent’s fallback to arithmetic defaults shows they prioritize simplicity and speed, so avoid multi-value offers to prevent parsing errors and secure the deal in one round.
+- [2026-04-02] Demand the full surplus in a single-value array (e.g., `[816]`) immediately—this opponent concedes instantly to maximal, simple asks, so eliminate all negotiation steps to secure the deal in the first round without risking parsing errors or delays.

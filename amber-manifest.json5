@@ -11,11 +11,6 @@
     additionalProperties: false,
   },
 
-  // External services this agent uses
-  slots: {
-    proxy: { kind: "a2a", optional: true },
-  },
-
   // Runtime configuration
   program: {
     image: "ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.0",

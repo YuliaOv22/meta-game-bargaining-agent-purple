@@ -47,9 +47,9 @@ Green agent sends observation (JSON via A2A)
 
 ### Decision Flow
 
-1. **Context enrichment** -- the agent builds a detailed `[SITUATION]` block with computed values: item worth, BATNA comparison, discount pressure, opponent behavior patterns, and lessons from past games against this opponent.
+1. **Context enrichment** -- the agent builds a detailed `[SITUATION]` block with computed values: item worth, BATNA comparison, discount pressure, cheapest items to offer (for Nash Welfare), EF1 status of opponent's offer, opponent behavior patterns, and lessons from past games against this opponent.
 
-2. **LLM reasoning** -- Mistral receives the observation plus the situation block and reasons step-by-step inside `<think>` tags before producing a JSON decision.
+2. **LLM reasoning** -- Mistral receives the observation plus the situation block and reasons step-by-step inside `<think>` tags before producing a JSON decision. The agent is explicitly instructed to maximize Nash Welfare and aim for EF1-compatible allocations.
 
 3. **Safety validation** -- code checks the LLM output for M1-M5 violations and fixes them automatically. This is the last line of defense against arithmetic mistakes.
 
@@ -57,13 +57,24 @@ Green agent sends observation (JSON via A2A)
 
 | Rule | Violation | Protection |
 |------|-----------|------------|
-| M1 | Offer worse than your previous offer | Track `best_offer_value`, fix via `_fix_proposal()` |
+| M1 (relaxed) | Offer more than 15% below previous best | Concessions up to 15% allowed to enable Nash Welfare improvement; hard floor is BATNA |
 | M2 | Offer worth less than BATNA | Filter `my_val < batna`, fix via `_fix_proposal()` |
 | M3 | Offer all items or zero items | Filter `sum == 0 or sum == total`, fix via `_fix_proposal()` |
 | M4 | Accept offer worth less than BATNA | Override to reject |
 | M5 | Walk away from offer above BATNA on last round | Override to accept |
 
-The `_fix_proposal()` method finds the closest valid allocation by brute-force search over all possible item splits.
+The `_fix_proposal()` method finds the best valid allocation by brute-force search over all possible item splits, optimizing for Nash Welfare proxy: `sqrt(my_val) * sqrt(opponent_items + 1)`.
+
+## Nash Welfare Strategy
+
+The agent is optimized for the leaderboard metrics: Nash Welfare (NW), Nash Welfare above BATNA (NWA), and Envy-Freeness up to one item (EF1).
+
+**Key principles:**
+
+- **Give cheapest items first** -- items the agent values least may be very valuable to the opponent. The situation block always shows items sorted by value so the LLM can make informed offers.
+- **Concessions are allowed** -- M1 is relaxed to allow up to 15% concessions below the previous best offer. This lets the agent move toward mutually beneficial deals rather than getting locked into greed.
+- **EF1 awareness** -- the agent checks and reports EF1 status (envy-freeness up to one item) for both its proposals and incoming offers, guiding the LLM toward fairer splits.
+- **Fallback optimization** -- when the LLM fails to produce valid JSON, `_fix_proposal()` selects the allocation that maximizes `sqrt(my_val) * sqrt(opponent_items + 1)` rather than simply minimizing distance to the previous offer.
 
 ## Memory System
 

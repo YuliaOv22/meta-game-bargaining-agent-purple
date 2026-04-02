@@ -1,12 +1,12 @@
 # Opponent: purple_vs_soft
-Games: 5 | Agreements: 5
+Games: 9 | Agreements: 9
 
 ## Summary
-No summary yet.
+Opponent "purple_vs_soft" consistently accepts extreme first offers without resistance, showing no willingness to counter or negotiate. Exploit this by anchoring aggressively (90%+ of total value) to maximize gains.
 
 ## Lessons
-- [2026-03-27] This opponent makes aggressive first offers (capturing ~37% of total value for themselves) and accepts quickly—next time, anchor even higher in your opening offer to exploit their willingness to concede early.
-- [2026-03-27] Anchor even higher—this opponent accepted your first offer (644) without countering, so next time open at 700+ to capture more of the remaining 162 value they left on the table.
-- [2026-03-27] This opponent consistently accepts high first offers without countering—next time, open at 750+ to capture nearly all remaining value, as they show no resistance to extreme anchors.
-- [2026-03-27] This opponent consistently accepts extreme anchors without resistance—next time, open at **780+** (90%+ of total value) to fully exploit their unwillingness to counter or reject high first offers.
-- [2026-03-27] This opponent consistently accepts extreme first offers without negotiation—next time, open at **800+ (95%+ of total value)** to maximize gains, as they show zero resistance to even higher anchors.
+- [2026-04-02] [2026-03-27] This opponent consistently accepts extreme anchors without resistance—next time, open at **780+ (90%+ of total value)** to fully exploit their unwillingness to counter or reject high first offers.
+- [2026-04-02] [2026-04-02] Open at **820+ (99% of total value)**—this opponent has repeatedly accepted extreme anchors without resistance, leaving almost no value unclaimed, so push the limit to capture the remaining 8.
+- [2026-04-02] Open at **850+ (99.9% of total value)**—this opponent’s acceptance of 432 (73%) confirms they still don’t resist even mid-range anchors, so push to the absolute ceiling to capture the last sliver of unclaimed value.
+- [2026-04-02] Open at **900+ (99%+ of total value)**—this opponent’s immediate acceptance of 576 (57%) confirms they still don’t resist even mid-high anchors, so push to the absolute ceiling to capture the remaining unclaimed value.
+- [2026-04-02] Open at **999 (100% of total value)**—this opponent’s repeated acceptance of extreme anchors (now up to 90%+) proves they won’t resist even the absolute ceiling, so claim the entire surplus to maximize payoff.

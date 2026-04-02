@@ -18,4 +18,5 @@ logs/
 
 # custom
 simulate_green.py
+metrics_benchmark.py
 docs/
