@@ -1,5 +1,5 @@
 {
-  manifest_version: "0.1.0",
+  manifest_version: "0.1.1",
 
   // Mistral API key for the bargaining LLM agent
   config_schema: {
@@ -13,7 +13,7 @@
 
   // Runtime configuration
   program: {
-    image: "ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.0",
+    image: "ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.1",
     entrypoint: "uv run src/server.py --host 0.0.0.0 --port 9009",
 
     env: {
