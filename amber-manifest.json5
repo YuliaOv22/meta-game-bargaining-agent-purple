@@ -1,23 +1,31 @@
 {
   manifest_version: "0.1.1",
 
-  // Mistral API key for the bargaining LLM agent
+  // LLM provider config: set llm_provider to "mistral" or "openrouter"
   config_schema: {
     type: "object",
     properties: {
+      llm_provider: { type: "string" },
       mistral_api_key: { type: "string", secret: true },
+      mistral_model: { type: "string" },
+      openrouter_api_key: { type: "string", secret: true },
+      openrouter_model: { type: "string" },
     },
-    required: ["mistral_api_key"],
+    required: ["llm_provider"],
     additionalProperties: false,
   },
 
   // Runtime configuration
   program: {
-    image: "ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.1",
+    image: "ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.2",
     entrypoint: "uv run src/server.py --host 0.0.0.0 --port 9009",
 
     env: {
+      LLM_PROVIDER: "${config.llm_provider}",
       MISTRAL_API_KEY: "${config.mistral_api_key}",
+      MISTRAL_MODEL: "${config.mistral_model}",
+      OPENROUTER_API_KEY: "${config.openrouter_api_key}",
+      OPENROUTER_MODEL: "${config.openrouter_model}",
     },
 
     network: {

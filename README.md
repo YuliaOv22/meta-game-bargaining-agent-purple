@@ -146,13 +146,13 @@ uv run pytest -v --agent-url http://localhost:9009
 
 ```bash
 # Build
-docker build --platform linux/amd64 -t ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.1 .
+docker build --platform linux/amd64 -t ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.2 .
 
 # Run
-docker run -p 9009:9009 --env-file .env ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.0
+docker run -p 9009:9009 --env-file .env ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.2
 
 # Push
-docker push ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.1
+docker push ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.2
 ```
 
 ## Configuration
