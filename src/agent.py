@@ -11,6 +11,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from mistralai.client import Mistral
+from openai import OpenAI as _OpenAIClient
 
 from a2a.server.tasks import TaskUpdater
 from a2a.types import Message, TaskState, Part, TextPart
@@ -19,6 +20,9 @@ from a2a.utils import get_message_text
 from memory import markdown_memory
 
 load_dotenv()
+
+# LLM provider selection: set LLM_PROVIDER=openrouter or LLM_PROVIDER=mistral (default)
+_LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "mistral").lower()
 
 logger = logging.getLogger(__name__)
 
@@ -323,12 +327,21 @@ class Agent:
     """Bargaining agent that uses Mistral LLM with code-level M1-M5 safety validation."""
 
     def __init__(self):
-        """Initialize the agent with Mistral client, conversation state, and game memory."""
-        api_key = os.environ.get("MISTRAL_API_KEY")
-        if not api_key:
-            raise ValueError("MISTRAL_API_KEY environment variable is required")
-        self.client = Mistral(api_key=api_key)
-        self.model = os.environ.get("MISTRAL_MODEL", "mistral-small-latest")
+        """Initialize the agent with LLM client, conversation state, and game memory."""
+        if _LLM_PROVIDER == "openrouter":
+            api_key = os.environ.get("OPENROUTER_API_KEY")
+            if not api_key:
+                raise ValueError("OPENROUTER_API_KEY environment variable is required")
+            self.client = _OpenAIClient(
+                api_key=api_key, base_url="https://openrouter.ai/api/v1"
+            )
+            self.model = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+        else:
+            api_key = os.environ.get("MISTRAL_API_KEY")
+            if not api_key:
+                raise ValueError("MISTRAL_API_KEY environment variable is required")
+            self.client = Mistral(api_key=api_key)
+            self.model = os.environ.get("MISTRAL_MODEL", "mistral-small-latest")
         self.conversation_history: list[dict[str, str]] = []
         self.game_memory = GameMemory()
         self._last_game_key: str = ""
@@ -632,12 +645,31 @@ class Agent:
 
         return json.dumps({"accept": False, "reason": "fallback: unknown action"})
 
+    def _chat_complete(
+        self,
+        messages: list[dict],
+        temperature: float = 0.2,
+        max_tokens: int | None = None,
+    ) -> str:
+        """Call the configured LLM provider and return the response text."""
+        kwargs: dict = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+        if max_tokens is not None:
+            kwargs["max_tokens"] = max_tokens
+        if _LLM_PROVIDER in ("openai", "openrouter"):
+            response = self.client.chat.completions.create(**kwargs)
+        else:
+            response = self.client.chat.complete(**kwargs)
+        return response.choices[0].message.content or ""
+
     def _call_llm_with_retry(self, max_retries: int = 3) -> str:
         """Call LLM with retry and exponential backoff on 429 rate limit."""
         for attempt in range(max_retries):
             try:
-                response = self.client.chat.complete(
-                    model=self.model,
+                return self._chat_complete(
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
                         *self.conversation_history,
@@ -645,7 +677,6 @@ class Agent:
                     temperature=0.2,
                     max_tokens=1024,
                 )
-                return response.choices[0].message.content or ""
             except Exception as e:
                 error_str = str(e)
                 if "429" in error_str or "rate" in error_str.lower():
@@ -666,8 +697,7 @@ class Agent:
         lesson_prompt = markdown_memory.build_lesson_prompt(mem.opp_key, game_summary)
 
         try:
-            response = self.client.chat.complete(
-                model=self.model,
+            lesson = self._chat_complete(
                 messages=[
                     {
                         "role": "system",
@@ -676,8 +706,7 @@ class Agent:
                     {"role": "user", "content": lesson_prompt},
                 ],
                 temperature=0.3,
-            )
-            lesson = (response.choices[0].message.content or "").strip()
+            ).strip()
         except Exception:
             # If LLM fails, save a factual fallback lesson
             lesson = (
@@ -700,8 +729,7 @@ class Agent:
             return
 
         try:
-            response = self.client.chat.complete(
-                model=self.model,
+            result = self._chat_complete(
                 messages=[
                     {
                         "role": "system",
@@ -710,8 +738,7 @@ class Agent:
                     {"role": "user", "content": consolidation_prompt},
                 ],
                 temperature=0.2,
-            )
-            result = (response.choices[0].message.content or "").strip()
+            ).strip()
             new_summary, kept_lessons = markdown_memory.parse_consolidation_response(
                 result
             )

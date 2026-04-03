@@ -19,7 +19,9 @@ def agent(request):
     try:
         response = httpx.get(f"{url}/.well-known/agent-card.json", timeout=2)
         if response.status_code != 200:
-            pytest.exit(f"Agent at {url} returned status {response.status_code}", returncode=1)
+            pytest.exit(
+                f"Agent at {url} returned status {response.status_code}", returncode=1
+            )
     except Exception as e:
         pytest.exit(f"Could not connect to agent at {url}: {e}", returncode=1)
 

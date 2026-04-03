@@ -1,4 +1,5 @@
 """Unit tests for the markdown memory module."""
+
 import sys
 from pathlib import Path
 
@@ -6,8 +7,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import pytest
-import tempfile
-import shutil
 from memory import MarkdownMemory
 
 
@@ -31,7 +30,9 @@ class TestReadWrite:
 
     def test_add_lesson_creates_file(self, mem):
         """Adding a lesson for a new opponent should create the memory file."""
-        mem.add_lesson("tough", "They never accept. Just take their offer.", games=1, agreements=0)
+        mem.add_lesson(
+            "tough", "They never accept. Just take their offer.", games=1, agreements=0
+        )
         content = mem.read("tough")
         assert content is not None
         assert "tough" in content.lower()
@@ -87,7 +88,11 @@ class TestConsolidation:
         for i in range(6):
             mem.add_lesson("opp", f"Lesson {i}.", games=i + 1, agreements=i)
 
-        mem.apply_consolidation("opp", "This opponent is tough and rarely accepts.", ["Key lesson 1", "Key lesson 2"])
+        mem.apply_consolidation(
+            "opp",
+            "This opponent is tough and rarely accepts.",
+            ["Key lesson 1", "Key lesson 2"],
+        )
         content = mem.read("opp")
         assert "This opponent is tough" in content
         assert "Key lesson 1" in content

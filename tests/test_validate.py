@@ -1,4 +1,5 @@
 """Unit tests for Agent._validate_and_fix and GameMemory."""
+
 import sys
 import json
 from pathlib import Path
@@ -8,9 +9,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 import pytest
 from unittest.mock import MagicMock, patch
 
-
 # We need to mock external dependencies before importing agent
-with patch.dict("sys.modules", {"mistralai.client": MagicMock(), "mistralai": MagicMock()}):
+with patch.dict(
+    "sys.modules", {"mistralai.client": MagicMock(), "mistralai": MagicMock()}
+):
     from agent import Agent, GameMemory, _dot, _parse_observation
 
 
@@ -92,7 +94,9 @@ class TestValidateAndFix:
     @pytest.fixture
     def agent(self):
         """Create an Agent with mocked Mistral client and preset game memory."""
-        with patch.dict("sys.modules", {"mistralai.client": MagicMock(), "mistralai": MagicMock()}):
+        with patch.dict(
+            "sys.modules", {"mistralai.client": MagicMock(), "mistralai": MagicMock()}
+        ):
             with patch("agent.Mistral"):
                 a = Agent()
                 a.game_memory = GameMemory()
@@ -105,7 +109,13 @@ class TestValidateAndFix:
 
     def test_valid_proposal_passes(self, agent):
         """A valid proposal should pass through unchanged."""
-        reply = json.dumps({"allocation_self": [5, 2, 1], "allocation_other": [2, 2, 0], "reason": "test"})
+        reply = json.dumps(
+            {
+                "allocation_self": [5, 2, 1],
+                "allocation_other": [2, 2, 0],
+                "reason": "test",
+            }
+        )
         result = agent._validate_and_fix(reply, {}, "PROPOSE")
         parsed = json.loads(result)
         assert parsed["allocation_self"] == [5, 2, 1]
@@ -113,7 +123,13 @@ class TestValidateAndFix:
     def test_m2_fix_below_batna(self, agent):
         """M2: proposal with value below BATNA should be fixed upward."""
         # value = 10*1 + 20*1 + 30*0 = 30 < BATNA(80)
-        reply = json.dumps({"allocation_self": [1, 1, 0], "allocation_other": [6, 3, 1], "reason": "bad"})
+        reply = json.dumps(
+            {
+                "allocation_self": [1, 1, 0],
+                "allocation_other": [6, 3, 1],
+                "reason": "bad",
+            }
+        )
         result = agent._validate_and_fix(reply, {}, "PROPOSE")
         parsed = json.loads(result)
         fixed_val = _dot(agent.game_memory.valuations, parsed["allocation_self"])
@@ -125,7 +141,13 @@ class TestValidateAndFix:
         agent.game_memory.my_offers = [([5, 3, 1], 140)]
         agent.game_memory.best_offer_value = 140
         # value = 10*5 + 20*2 + 30*0 = 90 < prev best(140)
-        reply = json.dumps({"allocation_self": [5, 2, 0], "allocation_other": [2, 2, 1], "reason": "test"})
+        reply = json.dumps(
+            {
+                "allocation_self": [5, 2, 0],
+                "allocation_other": [2, 2, 1],
+                "reason": "test",
+            }
+        )
         result = agent._validate_and_fix(reply, {}, "PROPOSE")
         parsed = json.loads(result)
         fixed_val = _dot(agent.game_memory.valuations, parsed["allocation_self"])
@@ -134,7 +156,13 @@ class TestValidateAndFix:
 
     def test_m3_fix_all_items(self, agent):
         """M3: taking all items should be fixed to give at least one."""
-        reply = json.dumps({"allocation_self": [7, 4, 1], "allocation_other": [0, 0, 0], "reason": "greedy"})
+        reply = json.dumps(
+            {
+                "allocation_self": [7, 4, 1],
+                "allocation_other": [0, 0, 0],
+                "reason": "greedy",
+            }
+        )
         result = agent._validate_and_fix(reply, {}, "PROPOSE")
         parsed = json.loads(result)
         assert sum(parsed["allocation_self"]) < sum(agent.game_memory.quantities)
@@ -145,7 +173,13 @@ class TestValidateAndFix:
         # [0,0,0] triggers M2 first (value=0 < BATNA), which is correct — M2 catches it before M3
         # Test with a zero-items allocation that passes M2 by setting BATNA=0
         agent.game_memory.batna = 0
-        reply = json.dumps({"allocation_self": [0, 0, 0], "allocation_other": [7, 4, 1], "reason": "generous"})
+        reply = json.dumps(
+            {
+                "allocation_self": [0, 0, 0],
+                "allocation_other": [7, 4, 1],
+                "reason": "generous",
+            }
+        )
         result = agent._validate_and_fix(reply, {}, "PROPOSE")
         parsed = json.loads(result)
         assert sum(parsed["allocation_self"]) > 0

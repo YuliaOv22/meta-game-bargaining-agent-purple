@@ -1,12 +1,9 @@
 # Opponent: purple_vs_soft
-Games: 9 | Agreements: 9
+Games: 10 | Agreements: 10
 
 ## Summary
-Opponent "purple_vs_soft" consistently accepts extreme first offers without resistance, showing no willingness to counter or negotiate. Exploit this by anchoring aggressively (90%+ of total value) to maximize gains.
+Opponent "purple_vs_soft" unconditionally accepts extreme first offers, even at 100% of the total value, and never counters. Always open with a maximum anchor (999) to capture the entire surplus. If they move first with a ~50/50 split, reject it immediately and counter with 999 to trigger their proven acceptance pattern.
 
 ## Lessons
-- [2026-04-02] [2026-03-27] This opponent consistently accepts extreme anchors without resistance—next time, open at **780+ (90%+ of total value)** to fully exploit their unwillingness to counter or reject high first offers.
-- [2026-04-02] [2026-04-02] Open at **820+ (99% of total value)**—this opponent has repeatedly accepted extreme anchors without resistance, leaving almost no value unclaimed, so push the limit to capture the remaining 8.
-- [2026-04-02] Open at **850+ (99.9% of total value)**—this opponent’s acceptance of 432 (73%) confirms they still don’t resist even mid-range anchors, so push to the absolute ceiling to capture the last sliver of unclaimed value.
-- [2026-04-02] Open at **900+ (99%+ of total value)**—this opponent’s immediate acceptance of 576 (57%) confirms they still don’t resist even mid-high anchors, so push to the absolute ceiling to capture the remaining unclaimed value.
-- [2026-04-02] Open at **999 (100% of total value)**—this opponent’s repeated acceptance of extreme anchors (now up to 90%+) proves they won’t resist even the absolute ceiling, so claim the entire surplus to maximize payoff.
+- [2026-04-03] Open at **999 (100% of total value)**—this opponent’s repeated acceptance of extreme anchors (now up to 90%+) proves they won’t resist even the absolute ceiling, so claim the entire surplus to maximize payoff.
+- [2026-04-03] Never accept this opponent’s opening offer, as they default to a ~50/50 split when moving first; instead, immediately counter with a 999+ anchor to force them into their proven pattern of unconditional acceptance.
