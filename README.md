@@ -10,7 +10,7 @@ This agent competes in the **AgentBeats x AgentX Competition 2025** bargaining s
 
 - **Agent Type**: Purple (Challenger)
 - **Domain**: Multi-agent negotiation / bargaining
-- **LLM**: Mistral Large (configurable)
+- **LLM**: Mistral or OpenRouter (configurable via `LLM_PROVIDER`)
 - **Protocol**: A2A (Agent-to-Agent)
 
 ### Game Rules
@@ -124,7 +124,9 @@ uv sync
 
 # Configure API key
 cp sample.env .env
-# Edit .env: set MISTRAL_API_KEY=your_key_here
+# Edit .env: set LLM_PROVIDER and the corresponding API key
+# For Mistral: MISTRAL_API_KEY=your_key_here
+# For OpenRouter: LLM_PROVIDER=openrouter, OPENROUTER_API_KEY=your_key_here
 
 # Start the agent server
 uv run src/server.py --host 127.0.0.1 --port 9009
@@ -157,8 +159,11 @@ docker push ghcr.io/yuliaov22/meta-game-bargaining-agent-purple:v1.1
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MISTRAL_API_KEY` | -- | Mistral API key (required) |
+| `LLM_PROVIDER` | `mistral` | LLM provider: `mistral` or `openrouter` |
+| `MISTRAL_API_KEY` | -- | Mistral API key (required when `LLM_PROVIDER=mistral`) |
 | `MISTRAL_MODEL` | `mistral-large-latest` | Mistral model to use |
+| `OPENROUTER_API_KEY` | -- | OpenRouter API key (required when `LLM_PROVIDER=openrouter`) |
+| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | OpenRouter model to use |
 | `AGENT_MEMORY_DIR` | `./memory` | Directory for persistent memory files |
 | `AGENT_LOGS_DIR` | `./logs` | Directory for game log files |
 
